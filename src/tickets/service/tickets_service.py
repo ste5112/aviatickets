@@ -18,3 +18,6 @@ class TicketsService:
 
     async def search(self, request: TicketsRequest) -> list[TicketDB]:
         return list(await self._repo.list(request))
+
+    async def get_by_id(self, ticket_id: int) -> TicketDB:
+        return await self._repo.get_by_id(ticket_id)

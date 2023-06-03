@@ -12,7 +12,7 @@ class TicketsRepo(BaseRepo):
     model_class = TicketDB
 
     def __init__(self, session_factory):
-        self._session = session_factory
+        super().__init__(session_factory)
 
     async def list(self, request: TicketsRequest) -> Iterable[model_class]:
         async with self._session.begin():
