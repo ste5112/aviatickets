@@ -1,3 +1,6 @@
+import threading
+from collections import Counter
+
 import pytest
 import pytest_asyncio
 from sqlmodel import select
@@ -25,6 +28,12 @@ async def test_db_is_not_empty(repo_tickets):
     assert len(repo_tickets) >= 0
 
 
+@pytest_asyncio.fixture
+async def unreserved_ticket(client):
+    async with client.app.container._session_factory().begin() as session:
+        return (await session.exec(select(TicketDB).where(TicketDB.is_reserved == False))).first()
+
+
 def test_get_tickets(client, tickets):
     data = client.get(
         '/tickets/', params={
@@ -41,18 +50,35 @@ def test_get_tickets(client, tickets):
         assert ticket['destination_point'] == tickets[0].destination_point, ticket.id
 
 
-def test_reserve_ticket(client, repo_tickets):
-
-    ticket_id = None
-    for ticket in repo_tickets:
-        if not ticket.is_reserved:
-            ticket_id = ticket.id
-            break
-
-    assert ticket_id is not None
+def test_reserve_ticket(client, unreserved_ticket):
+    ticket_id = unreserved_ticket.id
     reserved_ticket_response = client.post(f'/tickets/reserve/{ticket_id}')
     reserved_ticket = reserved_ticket_response.json()
     assert reserved_ticket_response.is_success
     assert reserved_ticket['id'] == ticket_id
     assert reserved_ticket['is_reserved'] is True
+
+
+def test_reserve_ticket_concurrently(client, unreserved_ticket):
+    ticket_id = unreserved_ticket.id
+    threads_count = 10
+    results = [None] * threads_count
+
+    def func(path, results_list, thread_number):
+        results_list[thread_number] = client.post(path).status_code
+
+    threads = []
+
+    for i in range(threads_count):
+        thread = threading.Thread(target=func, args=(f'/tickets/reserve/{ticket_id}/', results, i))
+        thread.start()
+        threads.append(thread)
+
+    for thr in threads:
+        thr.join()
+
+    counted_results = Counter(results)
+    assert counted_results[200] == 1
+    assert counted_results[409] == 9
+
 
