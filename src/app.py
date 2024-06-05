@@ -1,5 +1,7 @@
+import sys
 from contextlib import asynccontextmanager
 
+from dependency_injector.containers import DeclarativeContainer
 from fastapi import FastAPI
 from structlog import getLogger
 
@@ -11,19 +13,22 @@ setup_logging()
 logger = getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    logger.info("app startup")
-    app.container = AppContainer()
-    app.include_router(tickets_router)
+class App(FastAPI):
+    container: DeclarativeContainer
 
+
+@asynccontextmanager
+async def lifespan(app: App):
+    logger.info("app startup")
+    app.include_router(tickets_router)
     yield
     logger.info("app shutdown")
 
 
-app = FastAPI(
+app = App(
     title="Tickets API",
     lifespan=lifespan,
 )
+app.container = AppContainer()
 
 logger.info("app created")

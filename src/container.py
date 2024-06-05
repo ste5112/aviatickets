@@ -9,9 +9,9 @@ from tickets.service.tickets_service import TicketsService
 class AppContainer(DeclarativeContainer):
     wiring_config = WiringConfiguration(packages=["tickets"])
 
-    session_factory: Singleton = Singleton(SessionLocal)
+    _session_factory: Singleton = Singleton(SessionLocal)
 
-    tickets_repo: Singleton = Singleton(TicketsRepo, session_factory=session_factory)
+    tickets_repo: Singleton = Singleton(TicketsRepo, session_factory=_session_factory)
     tickets_service: Singleton = Singleton(
         TicketsService,
         repo=tickets_repo,
