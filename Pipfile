@@ -13,6 +13,11 @@ asyncpg = "*"
 
 [dev-packages]
 pytest = "*"
+pytest-cov = "*"
+pytest-asyncio = "*"
+mypy = "*"
+ruff = "*"
+faker = "*"
 
 [requires]
 python_version = "3.11"
