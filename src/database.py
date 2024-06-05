@@ -10,7 +10,7 @@ engine = create_async_engine(
     echo=True,
 )
 
-SessionLocal = sessionmaker(
+session_maker = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,

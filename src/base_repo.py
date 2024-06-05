@@ -1,4 +1,4 @@
-from typing import Iterable, Type
+from typing import Iterable
 
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -9,10 +9,13 @@ from tickets.models.base import BaseDBModel
 
 
 class BaseRepo:
-
-    model_class: SQLModel = BaseDBModel
+    """Base repository class"""
+    model_class: SQLModel = BaseDBModel  # data model repository works with
 
     def __init__(self, session: sessionmaker):
+        """
+        :param session: sqlalchemy sessionmaker instance
+        """
         if self.model_class is None:
             raise NotImplementedError("Model class has to be defined")
         self._session: sessionmaker = session
@@ -20,13 +23,13 @@ class BaseRepo:
     async def get_by_id(self, id: int) -> model_class:
         async with self._session() as session, session.begin():
             query = select(self.model_class).where(self.model_class.id == id)
-            return (await session.exec(query)).first()
+            return (await session.exec(query)).first()[0]
 
     async def save(self, obj) -> model_class:
         async with self._session() as session, session.begin():
             session.add(obj)
             await session.commit()
-        return obj  # session.commit() sub-sequentially calls session.flush() , so obj.id is filled
+        return obj # session.commit() sub-sequentially calls session.flush() , so obj.id is filled
 
     async def list(self, request: BaseModel | None) -> Iterable[model_class]:
         if request is not None:

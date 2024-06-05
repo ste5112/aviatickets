@@ -16,13 +16,20 @@ class TicketsRepo(BaseRepo):
     def __init__(self, session_factory):
         super().__init__(session_factory)
 
-
     async def list(self, request: TicketsRequest) -> Iterable[model_class]:
         async with self._session() as session, session.begin():
             query = select(self.model_class)
-            query = query.where(self.model_class.departure_time >= datetime.datetime.now())
+            query = query.where(self.model_class.departure_datetime >= datetime.datetime.now())
             query = query.where(self.model_class.departure_point == request.departure_point)
             query = query.where(self.model_class.destination_point == request.destination_point)
+            query = query.where(
+                self.model_class.departure_datetime <= datetime.datetime.now()
+                + datetime.timedelta(seconds=request.window_size_seconds)
+            )
+            query = query.where(
+                self.model_class.departure_datetime >= datetime.datetime.now()
+                - datetime.timedelta(seconds=request.window_size_seconds)
+            )
             return (await session.exec(query)).all()
 
     async def reserve_by_id(self, ticket_id: int) -> model_class:

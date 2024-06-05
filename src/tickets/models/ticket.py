@@ -10,8 +10,8 @@ class TicketDB(BaseDBModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     departure_point: str
     destination_point: str
-    departure_time: datetime
-    race_id: str = Field(index=True)
+    departure_datetime: datetime = Field(index=True)
+    race_id: str
     airline: str
     price: int
     is_reserved: bool = False

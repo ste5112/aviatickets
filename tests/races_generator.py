@@ -11,7 +11,7 @@ def _tickets_gen(from_, to_, time, race_id, airline, count, gen_price):
         yield TicketDB(
             departure_point=from_,
             destination_point=to_,
-            departure_time=time,
+            departure_datetime=time,
             race_id=race_id,
             airline=airline,
             price=gen_price(),  # in cents
